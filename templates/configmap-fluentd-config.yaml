@@ -1,0 +1,108 @@
+#
+# A ConfigMap spec for openldap slapd that map directly to env variables in the Pod.
+# List of environment variables supported is from the docker image:
+# https://github.com/osixia/docker-openldap#beginner-guide
+# Note that passwords are defined as secrets
+#
+{{- if .Values.fluentd.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "openldap.fullname" . }}-fluentd-config
+  labels:
+    app: {{ template "openldap.name" . }}-master
+    chart: {{ template "openldap.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.extraLabels }}
+{{ toYaml .Values.extraLabels | indent 4 }}
+{{- end }}
+data:
+  fluent.conf: |
+    <source>
+      tag openldap.stdout.parsed
+      @type tail
+      path {{ .Values.log.directory }}/{{ .Values.log.stdout }}
+      pos_file {{ .Values.log.directory }}/{{ .Values.log.stdout }}_parsed.pos
+      format /^(?<time>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Za-z]+) (?<uid>[0-9a-z]+) conn=(?<conn>[0-9\-]+) (fd=(?<fd>[0-9]+)|op=(?<op>[0-9]+))[:]* (?<msg_type>([A-Z ]+|closed|memberof_value_modify))[ ]*(?<message>.*)$/
+      time_key time
+      time_type string
+      time_format %Y-%m-%d %H:%M:%S %Z
+      {{- if .Values.fluentd.refresh_interval }}
+      refresh_interval {{ .Values.fluentd.refresh_interval }}
+      {{- end }}
+    </source>
+
+    <filter openldap.stdout.parsed>
+      @type record_transformer
+      <record>
+        logfile "access.log (parsed)"
+      </record>
+    </filter>
+
+
+    <source>
+      tag openldap.stdout.raw
+      @type tail
+      path {{ .Values.log.directory }}/{{ .Values.log.stdout }}
+      pos_file {{ .Values.log.directory }}/{{ .Values.log.stdout }}_raw.pos
+      format none
+      {{- if .Values.fluentd.refresh_interval }}
+      refresh_interval {{ .Values.fluentd.refresh_interval }}
+      {{- end }}
+    </source>
+
+    <filter openldap.stdout.raw>
+      @type record_transformer
+      <record>
+        logfile "access.log (raw)"
+      </record>
+    </filter>
+
+
+    <source>
+      tag openldap.auditlog
+      @type tail
+      path {{ .Values.log.directory }}/{{ .Values.log.auditlog }}
+      pos_file {{ .Values.log.directory }}/{{ .Values.log.auditlog }}.pos
+      <parse>
+        @type multiline
+        format_firstline /^# [a-z]+ [0-9]+ /
+        format1 /^# (?<msg_type>[a-z]+) (?<timestamp>[0-9]+) (?<message>[\w\W\R]+)/
+        time_key timestamp
+        time_type unixtime
+      </parse>
+      {{- if .Values.fluentd.refresh_interval }}
+      refresh_interval {{ .Values.fluentd.refresh_interval }}
+      {{- end }}
+    </source>
+
+    <filter openldap.auditlog>
+      @type record_transformer
+      <record>
+        logfile "auditlog.ldif"
+      </record>
+    </filter>
+
+
+    <match openldap.**>
+      @type splunk_hec
+      hec_host {{ .Values.fluentd.splunk.host }}
+      hec_port {{ .Values.fluentd.splunk.port }}
+      {{- if .Values.fluentd.splunk.force_http }}
+      protocol http
+      {{- end }}
+      {{- if .Values.fluentd.splunk.insecure_ssl }}
+      insecure_ssl true
+      {{- end }}
+      hec_token {{ .Values.fluentd.splunk.token }}
+      <format>
+        @type json
+      </format>
+      {{- if .Values.fluentd.splunk.flush_interval }}
+      <buffer>
+        flush_interval {{ .Values.fluentd.flush_interval }}
+      </buffer>
+      {{- end }}
+    </match>
+{{- end }}

@@ -1,0 +1,241 @@
+apiVersion: {{ template "statefulset.apiVersion" . }}
+kind: StatefulSet
+metadata:
+  name:  {{ template "openldap.fullname" . }}-slave
+  labels:
+    app: {{ template "openldap.fullname" . }}-slave
+    chart: {{ template "openldap.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+{{- if .Values.extraLabels }}
+{{ toYaml .Values.extraLabels | indent 4 }}
+{{- end }}
+spec:
+  replicas: {{ .Values.slaveReplicaCount }}
+{{- if .Values.updateStrategy }}
+  updateStrategy:
+{{ toYaml .Values.updateStrategy | indent 4 }}
+{{- end }}
+  selector:
+    matchLabels:
+      app: {{ template "openldap.fullname" . }}-slave
+      release: {{ .Release.Name }}
+  serviceName: {{ template "openldap.fullname" . }}-headless-slave
+  template:
+    metadata:
+      annotations:
+        checksum/configmap-env: {{ include (print $.Template.BasePath "/configmap-env-slave.yaml") . | sha256sum }}
+{{- if .Values.customLdifFiles}}
+        checksum/configmap-customldif: {{ include (print $.Template.BasePath "/configmap-customldif.yaml") . | sha256sum }}
+{{- end }}
+{{- if .Values.podAnnotations}}
+{{ toYaml .Values.podAnnotations | indent 8}}
+{{- end }}
+      labels:
+        app: {{ template "openldap.fullname" . }}-slave
+        release: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: init-chmod-secret
+          image: alpine
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              touch {{ .Values.log.directory }}/{{ .Values.log.auditlog }}
+              chown 911:911 {{ .Values.log.directory }}/{{ .Values.log.auditlog }}
+            {{- if .Values.fluentd.enabled }}
+              for file in {{ .Values.log.stdout }}_parsed.pos {{ .Values.log.stdout }}_raw.pos {{ .Values.log.auditlog }}.pos; do
+                touch {{ .Values.log.directory }}/${file}
+                chown 100:65533 {{ .Values.log.directory }}/${file}
+              done
+            {{- end }}
+            {{- if .Values.tls.enabled }}
+              mkdir /certs/test
+              cp -Lr /tmp-certs/* /certs/test
+              cp -Lr /tmp-certs/* /certs
+            {{- end }}
+          volumeMounts:
+            {{- if .Values.tls.enabled }}
+            - name: certs
+              mountPath: "/certs"
+            - name: secret-certs
+              mountPath: "/tmp-certs"
+            {{- end }}
+            - name: logs
+              mountPath: "{{ .Values.log.directory }}"
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.images.openldap.repository }}:{{ .Values.images.openldap.tag }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          args:
+            - -l
+            - {{ .Values.logLevel }}
+{{- if .Values.customLdifFiles }}
+            - --copy-service
+{{- end }}
+          ports:
+            - name: ldap-port
+              containerPort: 389
+            - name: ssl-ldap-port
+              containerPort: 636
+          envFrom:
+            - configMapRef:
+                name: {{ template "openldap.fullname" . }}-env-slave
+            - secretRef:
+                name: {{ template "openldap.secretName" . }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/ldap
+              subPath: data
+            - name: data
+              mountPath: /etc/ldap/slapd.d
+              subPath: config-data
+            - name: logs
+              mountPath: {{ .Values.log.directory }}
+{{- if .Values.tls.enabled }}
+            - name: certs
+              mountPath: "/container/service/slapd/assets/certs"
+{{- else }}
+            - name: data
+              mountPath: /container/service/slapd/assets/certs
+{{- end }}
+{{- if .Values.customLdifFiles }}
+            - name: custom-ldif-files
+              mountPath: /container/service/slapd/assets/config/bootstrap/ldif/custom
+{{- end }}
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: metadata.name
+            #- name: HOSTNAME
+            #  value: $(POD_NAME).{{ template "openldap.fullname" . }}-headless
+          {{- if .Values.tls.enabled }}
+            - name: LDAP_TLS_CRT_FILENAME
+              value: tls.crt
+            - name: LDAP_TLS_KEY_FILENAME
+              value: tls.key
+          {{- if .Values.tls.CA.enabled }}
+            - name: LDAP_TLS_CA_CRT_FILENAME
+              value: ca.crt
+          {{- end }}
+          {{- end }}
+          livenessProbe:
+            tcpSocket:
+              port: ldap-port
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 10
+          readinessProbe:
+            tcpSocket:
+              port: ldap-port
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 10
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+      {{- if .Values.fluentd.enabled }}
+        - name: fluentd
+          image: "{{ .Values.images.fluentd.repository }}:{{ .Values.images.fluentd.tag }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          volumeMounts:
+            - name: logs
+              mountPath: {{ .Values.log.directory }}
+            - name: fluentd-config
+              mountPath: /fluentd/etc
+      {{- end }}
+        - name: logrotate
+          image: "{{ .Values.images.logrotate.repository }}:{{ .Values.images.logrotate.tag }}"
+          imagePullPolicy: {{ .Values.images.pullPolicy }}
+          volumeMounts:
+            - name: logs
+              mountPath: {{ .Values.log.directory }}
+          env:
+            - name: "LOGROTATE_INTERVAL"
+              value: "{{ .Values.logrotate.check_interval }}"
+            - name: "LOGS_DIRECTORIES"
+              value: "{{ .Values.log.directory }}"
+            - name: "LOG_FILE_ENDINGS"
+              value: "log ldif"
+            - name: "LOGROTATE_COPIES"
+              value: "{{ .Values.logrotate.old_copies }}"
+            - name: "LOGROTATE_SIZE"
+              value: "{{ .Values.logrotate.max_log_size }}"
+          {{- if .Values.logrotate.compress }}
+            - name: "LOGROTATE_COMPRESSION"
+              value: "compress"
+          {{- end }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/component: {{ .Release.Name }}
+                app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- if .Values.images.openldap.pullSecret }}
+      imagePullSecrets:
+        - name: {{ .Values.images.openldap.pullSecret }}
+    {{- end }}
+      volumes:
+        - name: logs
+          emptyDir: {}
+      {{- if .Values.fluentd.enabled }}
+        - name: fluentd-config
+          configMap:
+            name: {{ template "openldap.fullname" . }}-fluentd-config
+            items:
+              - key: "fluent.conf"
+                path: "fluent.conf"
+      {{- end }}
+{{- if .Values.customLdifFiles }}
+        - name: custom-ldif-files
+          configMap:
+            name: {{ template "openldap.fullname" . }}-customldif
+{{- end }}
+{{- if .Values.tls.enabled }}
+        - name: secret-certs
+          secret:
+            secretName: {{ .Values.tls.secretSlave }}
+        - name: certs
+          emptyDir:
+            medium: Memory
+{{- end }}
+{{- if .Values.persistence.enabled }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        annotations:
+        {{- range $key, $value := .Values.persistence.annotations }}
+          {{ $key }}: {{ $value }}
+        {{- end }}
+      spec:
+        accessModes:
+        {{- range .Values.persistence.accessModes }}
+          - {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+      {{- if .Values.persistence.storageClass }}
+      {{- if (eq "-" .Values.persistence.storageClass) }}
+        storageClassName: ""
+      {{- else }}
+        storageClassName: "{{ .Values.persistence.storageClass }}"
+      {{- end }}
+{{- end }}
+{{- else }}
+        - name: data
+          emptyDir: {}
+{{- end }}
