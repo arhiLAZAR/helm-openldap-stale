@@ -58,8 +58,8 @@ service:
   ##
   externalIPs: []
 
-  # type: ClusterIP
-  type: LoadBalancer
+  type: ClusterIP
+  # type: LoadBalancer
   master:
     loadBalancerIP: ''
     # loadBalancerSourceRanges: []
