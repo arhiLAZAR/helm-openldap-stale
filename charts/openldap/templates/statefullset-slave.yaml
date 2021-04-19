@@ -184,9 +184,9 @@ spec:
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
-    {{- if .Values.images.openldap.pullSecret }}
+    {{- if .Values.images.pullSecret }}
       imagePullSecrets:
-        - name: {{ .Values.images.openldap.pullSecret }}
+        - name: {{ .Values.images.pullSecret }}
     {{- end }}
       volumes:
         - name: logs
