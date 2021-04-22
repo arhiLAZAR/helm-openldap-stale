@@ -79,10 +79,6 @@ env:
   LDAP_RFC2307BIS_SCHEMA: "false"
   LDAP_BACKEND: "mdb"
   LDAP_TLS: "true"
-  LDAP_TLS_CRT_FILENAME: "tls.crt"
-  LDAP_TLS_KEY_FILENAME: "tls.key"
-  LDAP_TLS_DH_PARAM_FILENAME: "dhparam.pem"
-  LDAP_TLS_CA_CRT_FILENAME: "ca.crt"
   LDAP_TLS_ENFORCE: "false"
   CONTAINER_LOG_LEVEL: "4"
   LDAP_TLS_REQCERT: "never"
@@ -145,7 +141,7 @@ persistence:
   size: 8Gi
 
 fluentd:
-  enabled: true
+  enabled: false
   refresh_interval: "1s"
   splunk:
     host: 127.0.0.1
