@@ -211,7 +211,7 @@ spec:
               - secret:
                   name: {{ .Values.tls.secretMaster }}
               - secret:
-                  name: {{ .Values.tls.CA.secretMasterCA }}
+                  name: {{ .Values.tls.secretMaster }}-ca
         - name: certs
           emptyDir:
             medium: Memory

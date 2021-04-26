@@ -211,7 +211,7 @@ spec:
               - secret:
                   name: {{ .Values.tls.secretSlave }}
               - secret:
-                  name: {{ .Values.tls.CA.secretSlaveCA }}
+                  name: {{ .Values.tls.secretSlave }}-ca
         - name: certs
           emptyDir:
             medium: Memory

@@ -166,12 +166,11 @@ tolerations: []
 # settings for enabling TLS with custom certificate
 tls:
   enabled: false
+  getCertsFromCertManager: false
   secretMaster: "ldap-tls-master"
   secretSlave:  "ldap-tls-slave"
   CA:
     enabled: true
-    secretMasterCA: "ldap-tls-master-ca"
-    secretSlaveCA:  "ldap-tls-slave-ca"
   files:
     master:
       tlsCrt: |
