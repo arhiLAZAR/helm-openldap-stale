@@ -166,10 +166,12 @@ tolerations: []
 # settings for enabling TLS with custom certificate
 tls:
   enabled: false
-  secretMaster: "ldap-tls-master"  # The name of a kubernetes.io/tls type secret to use for TLS
-  secretSlave:  "ldap-tls-slave"   # The name of a kubernetes.io/tls type secret to use for TLS
+  secretMaster: "ldap-tls-master"
+  secretSlave:  "ldap-tls-slave"
   CA:
     enabled: true
+    secretMasterCA: "ldap-tls-master-ca"
+    secretSlaveCA:  "ldap-tls-slave-ca"
   files:
     master:
       tlsCrt: |

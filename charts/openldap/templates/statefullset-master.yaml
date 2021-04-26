@@ -206,8 +206,12 @@ spec:
 {{- end }}
 {{- if .Values.tls.enabled }}
         - name: secret-certs
-          secret:
-            secretName: {{ .Values.tls.secretMaster }}
+          projected:
+            sources:
+              - secret:
+                  name: {{ .Values.tls.secretMaster }}
+              - secret:
+                  name: {{ .Values.tls.CA.secretMasterCA }}
         - name: certs
           emptyDir:
             medium: Memory
