@@ -163,6 +163,21 @@ nodeSelector: {}
 
 tolerations: []
 
+probes:
+  ldapmodifyCheck:
+    enabled: false
+    baseDomain: "dc=example,dc=org"
+  liveness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 2
+    timeoutSeconds: 10
+  readiness:
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 2
+    timeoutSeconds: 10
+
 # settings for enabling TLS with custom certificate
 tls:
   enabled: false

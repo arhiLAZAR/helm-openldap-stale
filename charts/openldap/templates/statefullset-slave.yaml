@@ -124,17 +124,35 @@ spec:
           {{- end }}
           {{- end }}
           livenessProbe:
+          {{- if .Values.probes.ldapmodifyCheck.enabled }}
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - timeout {{ sub .Values.probes.liveness.timeoutSeconds 1 }} ldapsearch -x -H ldap://localhost:389 -b "{{ .Values.probes.ldapmodifyCheck.baseDomain }}" -w $LDAP_ADMIN_PASSWORD -D "cn=admin,{{ .Values.probes.ldapmodifyCheck.baseDomain }}"
+          {{- else }}
             tcpSocket:
               port: ldap-port
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            failureThreshold: 10
+          {{- end }}
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
           readinessProbe:
+          {{- if .Values.probes.ldapmodifyCheck.enabled }}
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - timeout {{ sub .Values.probes.readiness.timeoutSeconds 1 }} ldapsearch -x -H ldap://localhost:389 -b "{{ .Values.probes.ldapmodifyCheck.baseDomain }}" -w $LDAP_ADMIN_PASSWORD -D "cn=admin,{{ .Values.probes.ldapmodifyCheck.baseDomain }}"
+          {{- else }}
             tcpSocket:
               port: ldap-port
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            failureThreshold: 10
+          {{- end }}
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
       {{- if .Values.fluentd.enabled }}
