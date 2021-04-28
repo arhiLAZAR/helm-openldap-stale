@@ -21,9 +21,9 @@ data:
 {{- if .Values.replication.enabled }}
   LDAP_REPLICATION: "true"
   READ_ONLY_REPLICA: "true"
-  LDAP_REPLICATION_CONFIG_SYNCPROV_MASTER: "binddn=\"cn=admin,cn=config\" bindmethod=simple credentials=$LDAP_CONFIG_PASSWORD searchbase=\"cn=schema,cn=config\" type=refreshAndPersist retry=\"{{.Values.replication.retry }} +\" timeout={{.Values.replication.timeout }} starttls={{.Values.replication.starttls }} tls_reqcert={{.Values.replication.tls_reqcert }}"
-  LDAP_REPLICATION_DB_SYNCPROV_MASTER: "binddn=\"cn=admin,$LDAP_BASE_DN\" bindmethod=simple credentials=$LDAP_ADMIN_PASSWORD searchbase=\"$LDAP_BASE_DN\" type=refreshAndPersist interval={{.Values.replication.interval }} retry=\"{{.Values.replication.retry }} +\" timeout={{.Values.replication.timeout }} starttls={{.Values.replication.starttls }} tls_reqcert={{.Values.replication.tls_reqcert }}"
+  LDAP_REPLICATION_CONFIG_SYNCPROV_MASTER: "binddn=\"cn=admin,cn=config\" bindmethod=simple credentials=$LDAP_CONFIG_PASSWORD searchbase=\"cn=schema,cn=config\" type=refreshAndPersist retry=\"{{.Values.replication.retry }} +\" timeout={{.Values.replication.timeout }}"
+  LDAP_REPLICATION_DB_SYNCPROV_MASTER: "binddn=\"cn=admin,$LDAP_BASE_DN\" bindmethod=simple credentials=$LDAP_ADMIN_PASSWORD searchbase=\"$LDAP_BASE_DN\" type=refreshAndPersist interval={{.Values.replication.interval }} retry=\"{{.Values.replication.retry }} +\" timeout={{.Values.replication.timeout }}"
   LDAP_REPLICATION_HOSTS_MASTER: "#PYTHON2BASH:[{{ template "replicalist-master" . }}]"
-  LDAP_REPLICATION_CONFIG_SYNCPROV_SLAVE: "binddn=\"cn=admin,cn=config\" bindmethod=simple credentials=$LDAP_CONFIG_PASSWORD searchbase=\"olcDatabase={1}mdb,cn=config\" type=refreshAndPersist retry=\"{{.Values.replication.retry }} +\" timeout={{.Values.replication.timeout }} starttls={{.Values.replication.starttls }} tls_reqcert={{.Values.replication.tls_reqcert }}"
+  LDAP_REPLICATION_CONFIG_SYNCPROV_SLAVE: "binddn=\"cn=admin,cn=config\" bindmethod=simple credentials=$LDAP_CONFIG_PASSWORD searchbase=\"olcDatabase={1}mdb,cn=config\" type=refreshAndPersist retry=\"{{.Values.replication.retry }} +\" timeout={{.Values.replication.timeout }}"
   LDAP_REPLICATION_HOSTS_SLAVE: "#PYTHON2BASH:[{{ template "replicalist-slave" . }}]"
 {{- end }}
