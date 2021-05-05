@@ -129,7 +129,7 @@ spec:
               command:
               - /bin/sh
               - -c
-              - timeout {{ sub .Values.probes.liveness.timeoutSeconds 1 }} ldapsearch -x -H ldap://localhost:389 -b "{{ .Values.probes.ldapmodifyCheck.baseDomain }}" -w $LDAP_ADMIN_PASSWORD -D "cn=admin,{{ .Values.probes.ldapmodifyCheck.baseDomain }}"
+              - timeout {{ sub .Values.probes.liveness.timeoutSeconds 1 }} ldapsearch -x -H ldap://localhost:389 -b "{{ .Values.probes.ldapmodifyCheck.baseDomain }}" -w $LDAP_ADMIN_PASSWORD -D "cn=admin,{{ .Values.probes.ldapmodifyCheck.baseDomain }}"{{ if .Values.tls.enabled }} -Z{{ end }}
           {{- else }}
             tcpSocket:
               port: ldap-port
@@ -144,7 +144,7 @@ spec:
               command:
               - /bin/sh
               - -c
-              - timeout {{ sub .Values.probes.readiness.timeoutSeconds 1 }} ldapsearch -x -H ldap://localhost:389 -b "{{ .Values.probes.ldapmodifyCheck.baseDomain }}" -w $LDAP_ADMIN_PASSWORD -D "cn=admin,{{ .Values.probes.ldapmodifyCheck.baseDomain }}"
+              - timeout {{ sub .Values.probes.readiness.timeoutSeconds 1 }} ldapsearch -x -H ldap://localhost:389 -b "{{ .Values.probes.ldapmodifyCheck.baseDomain }}" -w $LDAP_ADMIN_PASSWORD -D "cn=admin,{{ .Values.probes.ldapmodifyCheck.baseDomain }}"{{ if .Values.tls.enabled }} -Z{{ end }}
           {{- else }}
             tcpSocket:
               port: ldap-port
