@@ -190,14 +190,10 @@ spec:
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}
+    {{- if .Values.affinity }}
       affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - topologyKey: kubernetes.io/hostname
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/component: {{ .Release.Name }}
-                app.kubernetes.io/instance: {{ .Release.Name }}
+        {{ tpl .Values.affinity . | nindent 8 | trim }}
+    {{- end }}
     {{- with .Values.tolerations }}
       tolerations:
 {{ toYaml . | indent 8 }}
