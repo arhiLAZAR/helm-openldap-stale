@@ -160,18 +160,31 @@ resources: {}
  #   cpu: "500m"
  #   memory: "512Mi"
 
-nodeSelector: {}
+nodeSelector:
+  master: {}
+  slave: {}
 
-affinity: |
-  podAntiAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-    - topologyKey: kubernetes.io/hostname
-      labelSelector:
-        matchLabels:
-          app.kubernetes.io/component: {{ .Release.Name }}
-          app.kubernetes.io/instance: {{ .Release.Name }}
+affinity:
+  master: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: {{ .Release.Name }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
+  slave: |
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - topologyKey: kubernetes.io/hostname
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/component: {{ .Release.Name }}
+            app.kubernetes.io/instance: {{ .Release.Name }}
 
-tolerations: []
+tolerations:
+  master: []
+  slave: []
 
 probes:
   ldapmodifyCheck:

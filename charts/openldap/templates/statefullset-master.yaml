@@ -186,15 +186,15 @@ spec:
             - name: "LOGROTATE_COMPRESSION"
               value: "compress"
           {{- end }}
-    {{- with .Values.nodeSelector }}
+    {{- with .Values.nodeSelector.master }}
       nodeSelector:
 {{ toYaml . | indent 8 }}
     {{- end }}
-    {{- if .Values.affinity }}
+    {{- if .Values.affinity.master }}
       affinity:
-        {{ tpl .Values.affinity . | nindent 8 | trim }}
+        {{ tpl .Values.affinity.master . | nindent 8 | trim }}
     {{- end }}
-    {{- with .Values.tolerations }}
+    {{- with .Values.tolerations.master }}
       tolerations:
 {{ toYaml . | indent 8 }}
     {{- end }}
