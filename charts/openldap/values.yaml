@@ -171,16 +171,16 @@ affinity:
       - topologyKey: kubernetes.io/hostname
         labelSelector:
           matchLabels:
-            app.kubernetes.io/component: {{ .Release.Name }}
-            app.kubernetes.io/instance: {{ .Release.Name }}
+            app: {{ template "openldap.fullname" . }}-master
+            release: {{ .Release.Name }}
   slave: |
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - topologyKey: kubernetes.io/hostname
         labelSelector:
           matchLabels:
-            app.kubernetes.io/component: {{ .Release.Name }}
-            app.kubernetes.io/instance: {{ .Release.Name }}
+            app: {{ template "openldap.fullname" . }}-slave
+            release: {{ .Release.Name }}
 
 tolerations:
   master: []
