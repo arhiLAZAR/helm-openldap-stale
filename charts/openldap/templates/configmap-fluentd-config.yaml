@@ -33,12 +33,27 @@ data:
       {{- end }}
     </source>
 
-    <filter openldap.stdout.parsed>
-      @type record_transformer
-      <record>
-        logfile "access.log (parsed)"
-      </record>
-    </filter>
+    <match openldap.stdout.parsed>
+      @type splunk_hec
+      hec_host {{ .Values.fluentd.splunk.host }}
+      hec_port {{ .Values.fluentd.splunk.port }}
+      {{- if .Values.fluentd.splunk.force_http }}
+      protocol http
+      {{- end }}
+      {{- if .Values.fluentd.splunk.insecure_ssl }}
+      insecure_ssl true
+      {{- end }}
+      hec_token {{ .Values.fluentd.splunk.token }}
+      <format>
+        @type json
+      </format>
+      sourcetype {{ .Values.fluentd.splunk.sourcetypes.accessParsed }}
+      {{- if .Values.fluentd.splunk.flush_interval }}
+      <buffer>
+        flush_interval {{ .Values.fluentd.flush_interval }}
+      </buffer>
+      {{- end }}
+    </match>
 
 
     <source>
@@ -52,12 +67,27 @@ data:
       {{- end }}
     </source>
 
-    <filter openldap.stdout.raw>
-      @type record_transformer
-      <record>
-        logfile "access.log (raw)"
-      </record>
-    </filter>
+    <match openldap.stdout.raw>
+      @type splunk_hec
+      hec_host {{ .Values.fluentd.splunk.host }}
+      hec_port {{ .Values.fluentd.splunk.port }}
+      {{- if .Values.fluentd.splunk.force_http }}
+      protocol http
+      {{- end }}
+      {{- if .Values.fluentd.splunk.insecure_ssl }}
+      insecure_ssl true
+      {{- end }}
+      hec_token {{ .Values.fluentd.splunk.token }}
+      <format>
+        @type json
+      </format>
+      sourcetype {{ .Values.fluentd.splunk.sourcetypes.accessRaw }}
+      {{- if .Values.fluentd.splunk.flush_interval }}
+      <buffer>
+        flush_interval {{ .Values.fluentd.flush_interval }}
+      </buffer>
+      {{- end }}
+    </match>
 
 
     <source>
@@ -77,15 +107,7 @@ data:
       {{- end }}
     </source>
 
-    <filter openldap.auditlog>
-      @type record_transformer
-      <record>
-        logfile "auditlog.ldif"
-      </record>
-    </filter>
-
-
-    <match openldap.**>
+    <match openldap.auditlog>
       @type splunk_hec
       hec_host {{ .Values.fluentd.splunk.host }}
       hec_port {{ .Values.fluentd.splunk.port }}
@@ -99,6 +121,7 @@ data:
       <format>
         @type json
       </format>
+      sourcetype {{ .Values.fluentd.splunk.sourcetypes.audit }}
       {{- if .Values.fluentd.splunk.flush_interval }}
       <buffer>
         flush_interval {{ .Values.fluentd.flush_interval }}

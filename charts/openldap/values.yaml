@@ -148,6 +148,10 @@ fluentd:
     host: 127.0.0.1
     port: 8088
     token: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    sourcetypes:
+      audit: "ldap:audit"
+      accessRaw: "ldap:access_raw"
+      accessParsed: "ldap:access_parsed"
     force_http: false
     insecure_ssl: false
     flush_interval: "5s"
