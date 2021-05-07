@@ -23,6 +23,9 @@ spec:
   {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.master.loadBalancerSourceRanges }}
   loadBalancerSourceRanges: {{ toYaml .Values.service.master.loadBalancerSourceRanges | nindent 4 }}
   {{- end }}
+  {{- if and (eq .Values.service.type "LoadBalancer") .Values.service.externalTrafficPolicy }}
+  externalTrafficPolicy: {{ .Values.service.externalTrafficPolicy }}
+  {{- end }}
   ports:
     - name: ldap-port
       protocol: TCP

@@ -60,6 +60,7 @@ service:
 
   type: ClusterIP
   # type: LoadBalancer
+  externalTrafficPolicy: Local
   master:
     loadBalancerIP: ''
     # loadBalancerSourceRanges: []
